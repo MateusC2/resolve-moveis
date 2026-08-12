@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0b3b8f" />
+  <meta name="theme-color" content="#0086d8" />
   <title>Resolve Móveis | Apoio ao SAC Pós-venda</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,16 +12,20 @@
 </head>
 <body>
   <div class="app-shell">
+    <div class="magalu-stripe" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <header class="topbar">
-      <a class="brand" href="#" aria-label="Resolve Móveis — início">
-        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-        <span><strong>Resolve</strong> Móveis</span>
+      <a class="brand" href="#" aria-label="Magalu Resolve Móveis — início">
+        <span class="magalu-wordmark">magalu</span>
+        <span class="brand-divider"></span>
+        <span class="product-name">Resolve <strong>Móveis</strong></span>
       </a>
+      <nav class="main-nav" aria-label="Navegação principal">
+        <a class="active" href="#triageForm">Triagem</a>
+        <a href="#quickGuide">Orientações</a>
+      </nav>
       <div class="header-meta">
-        <span class="status-dot"></span>
-        <span>Base operacional</span>
-        <span class="header-divider"></span>
-        <span id="today"></span>
+        <span class="support-badge">SAC</span>
+        <div><strong>Central de apoio</strong><small><span class="status-dot"></span> Base operacional ativa</small></div>
       </div>
     </header>
 
@@ -32,10 +36,9 @@
           <h1>Resolva móveis<br><em>sem recontato.</em></h1>
           <p>Identifique a tratativa correta durante o atendimento. Menos transferências, mais resolução.</p>
         </div>
-        <div class="hero-stat" aria-label="Objetivo da ferramenta">
-          <span>OBJETIVO</span>
-          <strong>1 contato</strong>
-          <small>para concluir a orientação</small>
+        <div class="hero-visual" aria-label="Objetivo da ferramenta">
+          <div class="hero-orbit"></div>
+          <div class="contact-card"><span>objetivo do atendimento</span><strong>Resolver em<br>1 contato</strong><small>sem direcionar ao fabricante</small></div>
         </div>
       </section>
 
@@ -99,7 +102,7 @@
         </form>
       </section>
 
-      <section class="quick-guide">
+      <section class="quick-guide" id="quickGuide">
         <div class="guide-title"><span class="eyebrow">CONSULTA RÁPIDA</span><h2>Regras que evitam escalonamentos</h2></div>
         <div class="guide-cards">
           <article><span>01</span><h3>Troca direta</h3><p>Afundamento, barulho ou mola em colchões e estofados. Em madeira: falha de montagem, peça estrutural, mofo recente ou mais de 50% quebrado.</p></article>

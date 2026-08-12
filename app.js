@@ -11,7 +11,8 @@ const issueMap = {
 const state={step:1,supplier:'',product:'',issue:''};
 const labels={colchao:'Colchão',estofado:'Estofado',madeira:'Móvel de madeira',outro:'Outro móvel'};
 const input=document.querySelector('#supplierInput'), results=document.querySelector('#supplierResults');
-document.querySelector('#today').textContent=new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'short',year:'numeric'}).format(new Date()).replace('.','');
+const todayElement=document.querySelector('#today');
+if(todayElement) todayElement.textContent=new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'short',year:'numeric'}).format(new Date()).replace('.','');
 
 function normalize(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase()}
 function showSuppliers(value=''){
