@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Projeção & Metas</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome (Ícones) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Canvas Confetti JS -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'magalu-blue': '#0086ff',
+                        'magalu-pink': '#ff007f',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-magalu {
+            background: linear-gradient(135deg, #0086ff 0%, #ff007f 100%);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen p-4 md:p-8 font-sans antialiased text-slate-800">
+
+    <main class="max-w-5xl mx-auto space-y-6">
+
+        <!-- CABEÇALHO / NAVEGAÇÃO -->
+        <header class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-slate-100 pb-4 mb-4">
+                <div>
+                    <h1 class="text-2xl font-black text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-calculator text-magalu-blue"></i> Calculadora de Metas
+                    </h1>
+                    <p class="text-xs text-slate-500 mt-1">Acompanhe seu desempenho e projete seus resultados diários</p>
+                </div>
+                <div id="badge-nivel-container" class="px-5 py-3 rounded-2xl flex items-center gap-3 border shadow-sm bg-slate-50 border-slate-200">
+                    <span id="icon-nivel" class="text-2xl">⛰️</span>
+                    <div>
+                        <span id="nome-nivel" class="font-extrabold block leading-tight text-sm">CALCULANDO...</span>
+                        <span id="sub-nivel" class="text-[10px] font-bold block opacity-80 uppercase">Aguardando dados</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTROLES DE ENTRADA DO MÊS -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Dias Úteis no Mês</label>
+                    <input type="number" id="input-dias-totais" value="22" min="1" oninput="calcularProjecao()"
+                        class="w-full bg-white border border-slate-300 rounded-xl p-2 text-sm font-bold text-slate-800 focus:outline-none focus:border-magalu-blue">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Dias Trabalhados (Até hoje)</label>
+                    <input type="number" id="input-dias-passados" value="10" min="1" oninput="calcularProjecao()"
+                        class="w-full bg-white border border-slate-300 rounded-xl p-2 text-sm font-bold text-slate-800 focus:outline-none focus:border-magalu-blue">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Moedas Acumuladas</label>
+                    <input type="number" id="input-moedas-atuais" value="200" min="0" oninput="calcularProjecao()"
+                        class="w-full bg-white border border-slate-300 rounded-xl p-2 text-sm font-bold text-slate-800 focus:outline-none focus:border-magalu-blue">
+                </div>
+            </div>
+
+            <!-- STATUS E BARRA DE PROGRESSO -->
+            <div class="space-y-2">
+                <div class="flex justify-between text-xs font-bold text-slate-600">
+                    <span>Progresso Atual: <strong id="txt-moedas-fracao">0 / 0</strong> <span id="txt-porcentagem-atual" class="text-magalu-blue">(0%)</span></span>
+                    <span id="badge-dias-restantes" class="bg-slate-200 px-2 py-0.5 rounded-md text-slate-700">Faltam 0 dias</span>
+                </div>
+                <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200">
+                    <div id="bar-progresso-atual" class="h-full rounded-full transition-all duration-500 bg-slate-300 w-0"></div>
+                </div>
+                <p class="text-[11px] text-slate-400 italic text-center">
+                    Até o <span id="txt-dia-passado-inline">0º</span> dia, você acumulou <span id="txt-moedas-atuais-inline">0</span> de <span id="txt-moedas-possiveis-inline">0</span> moedas possíveis.
+                </p>
+            </div>
+
+            <!-- NAVEGAÇÃO DE TABS -->
+            <div class="flex gap-2 mt-6 pt-4 border-t border-slate-100">
+                <button id="tab-btn-projecao" onclick="switchTab('projecao')" class="flex-1 py-3 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 bg-magalu-blue text-white shadow-md">
+                    <i class="fa-solid fa-chart-line"></i> Projeção e Metas
+                </button>
+                <button id="tab-btn-diario" onclick="switchTab('diario')" class="flex-1 py-3 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
+                    <i class="fa-solid fa-calculator"></i> Calculadora Diária
+                </button>
+                <button id="tab-btn-regras" onclick="switchTab('regras')" class="flex-1 py-3 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
+                    <i class="fa-solid fa-circle-info"></i> Regras e Níveis
+                </button>
+            </div>
+        </header>
+
+        <!-- ================= TAB 1: PROJEÇÃO E METAS ================= -->
+        <section id="tab-projecao" class="space-y-6">
+            
+            <!-- Calculadora de Projeção / Metas Necessárias -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Target: NUVENS (Meta 67%) -->
+                <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 rounded-3xl p-6 relative overflow-hidden shadow-sm flex flex-col justify-between">
+                    <div class="absolute -right-4 -bottom-4 text-emerald-200/50 text-8xl font-black pointer-events-none">
+                        <i class="fa-solid fa-cloud"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="text-2xl">☁️</span>
+                                <h3 class="font-black text-emerald-900 text-lg">Para Ficar em NUVENS</h3>
+                            </div>
+                            <span class="bg-emerald-600 text-white text-xs font-extrabold px-3 py-1 rounded-full">META (100% DA META)</span>
+                        </div>
+
+                        <div class="space-y-3 mb-4">
+                            <div class="bg-white/80 backdrop-blur-sm p-3.5 rounded-xl border border-emerald-100 flex justify-between items-center">
+                                <span class="text-xs font-bold text-slate-600">Total necessário no mês:</span>
+                                <span id="meta-nuvens-total" class="font-black text-emerald-800 text-base">0 moedas</span>
+                            </div>
+                            <div class="bg-white/80 backdrop-blur-sm p-3.5 rounded-xl border border-emerald-100 flex justify-between items-center">
+                                <span class="text-xs font-bold text-slate-600">Faltam buscar:</span>
+                                <span id="meta-nuvens-faltam" class="font-black text-emerald-800 text-base">0 moedas</span>
+                            </div>
+                            <div id="box-nuvens-diaria" class="bg-emerald-600 text-white p-4 rounded-xl shadow-md text-center transition-all duration-300">
+                                <span class="block text-xs font-semibold uppercase tracking-wider text-emerald-100">Média Diária Necessária</span>
+                                <span id="meta-nuvens-diaria" class="block text-2xl sm:text-3xl font-black mt-1">0 moedas/dia</span>
+                                <span id="meta-nuvens-status-txt" class="block text-[11px] font-medium text-emerald-100 mt-1">
+                                    Para os dias restantes
+                                </span>
+                            </div>
+                            <div id="box-aguias-incentivo" class="hidden bg-gradient-to-r from-amber-500 to-orange-500 text-white p-4 rounded-xl shadow-md space-y-1.5 transition-all duration-300">
+                                <!-- Preenchido via JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Estratégia Recomendada para Nuvens -->
+                    <div class="bg-white/90 backdrop-blur-sm p-3.5 rounded-xl border border-emerald-200">
+                        <span class="text-[11px] font-extrabold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+                            <i class="fa-solid fa-chess-knight text-emerald-600"></i> Estratégia Diária Recomendada:
+                        </span>
+                        <div id="box-nuvens-estrategia" class="text-xs font-medium text-slate-700 space-y-1">
+                            <!-- Preenchido via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Target: ESTRELA (Super Meta 90%) -->
+                <div class="bg-gradient-to-br from-sky-50 to-blue-50 border border-sky-200 rounded-3xl p-6 relative overflow-hidden shadow-sm flex flex-col justify-between">
+                    <div class="absolute -right-4 -bottom-4 text-sky-200/50 text-8xl font-black pointer-events-none">
+                        <i class="fa-solid fa-star"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="text-2xl">⭐</span>
+                                <h3 class="font-black text-sky-900 text-lg">Para Ficar em ESTRELA</h3>
+                            </div>
+                            <span class="bg-sky-600 text-white text-xs font-extrabold px-3 py-1 rounded-full">SUPER META (120% DA META)</span>
+                        </div>
+
+                        <div class="space-y-3 mb-4">
+                            <div class="bg-white/80 backdrop-blur-sm p-3.5 rounded-xl border border-sky-100 flex justify-between items-center">
+                                <span class="text-xs font-bold text-slate-600">Total necessário no mês:</span>
+                                <span id="meta-estrela-total" class="font-black text-sky-800 text-base">0 moedas</span>
+                            </div>
+                            <div class="bg-white/80 backdrop-blur-sm p-3.5 rounded-xl border border-sky-100 flex justify-between items-center">
+                                <span class="text-xs font-bold text-slate-600">Faltam buscar:</span>
+                                <span id="meta-estrela-faltam" class="font-black text-sky-800 text-base">0 moedas</span>
+                            </div>
+                            <div class="bg-sky-600 text-white p-4 rounded-xl shadow-md text-center">
+                                <span class="block text-xs font-semibold uppercase tracking-wider text-sky-100">Média Diária Necessária</span>
+                                <span id="meta-estrela-diaria" class="block text-2xl sm:text-3xl font-black mt-1">0 moedas/dia</span>
+                                <span id="meta-estrela-status-txt" class="block text-[11px] font-medium text-sky-100 mt-1">
+                                    Para os dias restantes
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Estratégia Recomendada para Estrela -->
+                    <div class="bg-white/90 backdrop-blur-sm p-3.5 rounded-xl border border-sky-200">
+                        <span class="text-[11px] font-extrabold text-sky-900 uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+                            <i class="fa-solid fa-chess-knight text-sky-600"></i> Estratégia Diária Recomendada:
+                        </span>
+                        <div id="box-estrela-estrategia" class="text-xs font-medium text-slate-700 space-y-1">
+                            <!-- Preenchido via JS -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Simulação de Ritmo Diário -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
+                <h3 class="font-bold text-slate-800 mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-magalu-pink"></i> Simulador: E se eu mantiver certo ritmo diário?
+                </h3>
+                <p class="text-xs text-slate-500 mb-4">Ajuste quantas moedas você pretende fazer por dia daqui até o final do mês para prever onde você vai chegar!</p>
+
+                <div class="flex flex-col sm:flex-row items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                    <div class="w-full sm:w-1/2">
+                        <div class="flex justify-between text-xs font-bold mb-1">
+                            <span>Moedas por dia restante:</span>
+                            <span id="sim-ritmo-valor" class="text-magalu-blue font-extrabold text-sm">25 moedas/dia</span>
+                        </div>
+                        <input type="range" id="sim-slider-ritmo" min="0" max="30" step="1" value="25" oninput="simularRitmo()"
+                            class="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-magalu-blue">
+                    </div>
+                    <div class="w-full sm:w-1/2 bg-white p-3 rounded-xl border border-slate-200 text-center sm:text-left">
+                        <span class="text-xs text-slate-500 block font-medium">Resultado final estimado:</span>
+                        <div id="sim-resultado-box" class="font-extrabold text-slate-800 text-sm mt-0.5">
+                            Calculando...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- ================= TAB 2: CALCULADORA DIÁRIA ================= -->
+        <section id="tab-diario" class="space-y-6 hidden">
+            
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-coins text-yellow-500"></i> Calcule suas Moedas do Dia
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Descubra quantas moedas das 30 você conquistou hoje.</p>
+                    </div>
+                    <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-2 rounded-2xl text-center">
+                        <span class="text-[10px] uppercase font-bold text-yellow-600 block leading-none">Hoje Ganhou</span>
+                        <span id="total-moedas-dia" class="text-2xl font-black text-yellow-600 leading-none">30 / 30</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                    <!-- 1. CSAT (Max 9) -->
+                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                                    <i class="fa-solid fa-face-smile text-emerald-500"></i> CSAT
+                                </h3>
+                                <span class="bg-emerald-100 text-emerald-700 text-xs font-black px-2 py-0.5 rounded-md">Meta: 92%</span>
+                            </div>
+                            
+                            <!-- Inputs de Calculo -->
+                            <div class="grid grid-cols-2 gap-2 mb-3">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase">Promotores (Bom)</label>
+                                    <input type="number" id="csat-promotores" value="95" min="0" oninput="calcDia()"
+                                        class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase">Detratores (Ruim)</label>
+                                    <input type="number" id="csat-detratores" value="5" min="0" oninput="calcDia()"
+                                        class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs font-bold">
+                                </div>
+                            </div>
+
+                            <div class="bg-white p-3 rounded-xl border border-slate-200 mb-3 text-center">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase block">Seu CSAT Calculado</span>
+                                <span id="csat-pct-res" class="text-xl font-black text-emerald-600">95.0%</span>
+                            </div>
+
+                            <div class="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl text-center">
+                                <span class="text-xs text-emerald-800 font-bold block">Moedas do CSAT:</span>
+                                <span id="csat-moedas-res" class="text-lg font-black text-emerald-600">9 Moedas (⭐ Estrela)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. RPC (Max 9) -->
+                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                                    <i class="fa-solid fa-circle-check text-sky-500"></i> RPC
+                                </h3>
+                                <span class="bg-sky-100 text-sky-700 text-xs font-black px-2 py-0.5 rounded-md">Meta: 82%</span>
+                            </div>
+                            
+                            <!-- Inputs de Calculo -->
+                            <div class="grid grid-cols-2 gap-2 mb-3">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase">Qtd "SIM"</label>
+                                    <input type="number" id="rpc-sim" value="85" min="0" oninput="calcDia()"
+                                        class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase">Qtd "NÃO"</label>
+                                    <input type="number" id="rpc-nao" value="15" min="0" oninput="calcDia()"
+                                        class="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs font-bold">
+                                </div>
+                            </div>
+
+                            <div class="bg-white p-3 rounded-xl border border-slate-200 mb-3 text-center">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase block">Seu RPC Calculado</span>
+                                <span id="rpc-pct-res" class="text-xl font-black text-sky-600">85.0%</span>
+                            </div>
+
+                            <div class="bg-sky-50 border border-sky-200 p-2.5 rounded-xl text-center">
+                                <span class="text-xs text-sky-800 font-bold block">Moedas do RPC:</span>
+                                <span id="rpc-moedas-res" class="text-lg font-black text-sky-600">9 Moedas (⭐ Estrela)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. PERFORMANCE (Max 12) -->
+                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                                    <i class="fa-solid fa-bolt text-indigo-500"></i> Performance
+                                </h3>
+                                <span class="bg-indigo-100 text-indigo-700 text-xs font-black px-2 py-0.5 rounded-md">Máx: 12</span>
+                            </div>
+                            <p class="text-xs text-slate-500 mb-4">Escolha seu nível de produtividade hoje:</p>
+
+                            <div class="space-y-2">
+                                <label onclick="calcDia()" class="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200 cursor-pointer hover:border-indigo-400 transition">
+                                    <div class="flex items-center gap-2">
+                                        <input type="radio" name="radio-perf" value="12" checked class="accent-indigo-600">
+                                        <span class="text-xs font-bold text-slate-700">⭐ Estrela</span>
+                                    </div>
+                                    <span class="text-xs font-extrabold text-indigo-600">+12 moedas</span>
+                                </label>
+                                <label onclick="calcDia()" class="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200 cursor-pointer hover:border-indigo-400 transition">
+                                    <div class="flex items-center gap-2">
+                                        <input type="radio" name="radio-perf" value="8" class="accent-indigo-600">
+                                        <span class="text-xs font-bold text-slate-700">☁️ Nuvens</span>
+                                    </div>
+                                    <span class="text-xs font-extrabold text-indigo-600">+8 moedas</span>
+                                </label>
+                                <label onclick="calcDia()" class="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200 cursor-pointer hover:border-indigo-400 transition">
+                                    <div class="flex items-center gap-2">
+                                        <input type="radio" name="radio-perf" value="4" class="accent-indigo-600">
+                                        <span class="text-xs font-bold text-slate-700">🦅 Águias</span>
+                                    </div>
+                                    <span class="text-xs font-extrabold text-indigo-600">+4 moedas</span>
+                                </label>
+                                <label onclick="calcDia()" class="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200 cursor-pointer hover:border-indigo-400 transition">
+                                    <div class="flex items-center gap-2">
+                                        <input type="radio" name="radio-perf" value="0" class="accent-indigo-600">
+                                        <span class="text-xs font-bold text-slate-700">⛰️ Montanhas</span>
+                                    </div>
+                                    <span class="text-xs font-extrabold text-slate-400">0 moedas</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Botão de Ação -->
+                <div class="mt-6 pt-4 border-t border-slate-100 flex justify-end">
+                    <button onclick="adicionarMoedasAoSaldo()" class="gradient-magalu text-white font-extrabold py-3 px-6 rounded-2xl shadow-lg hover:opacity-95 transition flex items-center gap-2 text-sm">
+                        <i class="fa-solid fa-plus-circle"></i>
+                        <span>Somar estas moedas no meu Saldo do Mês</span>
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- ================= TAB 3: REGRAS E NÍVEIS ================= -->
+        <section id="tab-regras" class="space-y-6 hidden">
+            
+            <!-- Cards das Categorias -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
+                <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-trophy text-yellow-500"></i> As 4 Categorias do Mês
+                </h2>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Montanhas -->
+                    <div class="bg-red-50 border border-red-200 rounded-2xl p-4 text-center">
+                        <span class="text-3xl block mb-1">⛰️</span>
+                        <h3 class="font-extrabold text-red-800 text-base">MONTANHAS</h3>
+                        <span class="inline-block bg-red-200 text-red-900 font-black text-[10px] px-2 py-0.5 rounded-full my-1">
+                            Abaixo de 50%
+                        </span>
+                        <p class="text-xs text-red-700 mt-2 font-medium">Fora da Meta. Precisa focar na recuperação!</p>
+                    </div>
+
+                    <!-- Águias -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
+                        <span class="text-3xl block mb-1">🦅</span>
+                        <h3 class="font-extrabold text-amber-800 text-base">ÁGUIAS</h3>
+                        <span class="inline-block bg-amber-200 text-amber-900 font-black text-[10px] px-2 py-0.5 rounded-full my-1">
+                            50% a 66.9%
+                        </span>
+                        <p class="text-xs text-amber-700 mt-2 font-medium">Fora da Meta. Quase lá, falta um empurrão!</p>
+                    </div>
+
+                    <!-- Nuvens -->
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-center">
+                        <span class="text-3xl block mb-1">☁️</span>
+                        <h3 class="font-extrabold text-emerald-800 text-base">NUVENS</h3>
+                        <span class="inline-block bg-emerald-200 text-emerald-900 font-black text-[10px] px-2 py-0.5 rounded-full my-1">
+                            66.7% a 89.9% (20/30 moedas)
+                        </span>
+                        <p class="text-xs text-emerald-700 mt-2 font-medium">BATEU A META! (100% da Meta atingida)</p>
+                    </div>
+
+                    <!-- Estrela -->
+                    <div class="bg-sky-50 border border-sky-200 rounded-2xl p-4 text-center">
+                        <span class="text-3xl block mb-1">⭐</span>
+                        <h3 class="font-extrabold text-sky-800 text-base">ESTRELA</h3>
+                        <span class="inline-block bg-sky-200 text-sky-900 font-black text-[10px] px-2 py-0.5 rounded-full my-1">
+                            A partir de 90%
+                        </span>
+                        <p class="text-xs text-sky-700 mt-2 font-medium">SUPEROU A META! (120% da Meta atingida)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela de Distribuição das 30 Moedas Diárias -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-200">
+                <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-table-cells text-magalu-blue"></i> Distribuição Diária das 30 Moedas por Indicador
+                </h3>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 text-xs uppercase font-extrabold">
+                                <th class="p-3 rounded-l-xl">Indicador & Meta</th>
+                                <th class="p-3 text-sky-600">⭐ Estrela (120% da Meta)</th>
+                                <th class="p-3 text-emerald-600">☁️ Nuvens (100% da Meta)</th>
+                                <th class="p-3 text-amber-600">🦅 Águias (50% a 99% da Meta)</th>
+                                <th class="p-3 text-red-600 rounded-r-xl">⛰️ Montanhas (&lt;50% da Meta)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-xs font-medium">
+                            <tr>
+                                <td class="p-3 font-bold text-slate-800">⚡ Performance</td>
+                                <td class="p-3 font-bold text-sky-600">12 Moedas</td>
+                                <td class="p-3 font-bold text-emerald-600">8 Moedas</td>
+                                <td class="p-3 font-bold text-amber-600">4 Moedas</td>
+                                <td class="p-3 font-bold text-red-500">0 Moedas</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-bold text-slate-800">
+                                    😊 CSAT <span class="text-[10px] text-slate-400 block font-normal">(Meta Base: 92%)</span>
+                                </td>
+                                <td class="p-3 font-bold text-sky-600">
+                                    9 Moedas <span class="text-[10px] block font-normal opacity-80">(&ge; 95% CSAT)</span>
+                                </td>
+                                <td class="p-3 font-bold text-emerald-600">
+                                    6 Moedas <span class="text-[10px] block font-normal opacity-80">(92% a 94.9% CSAT)</span>
+                                </td>
+                                <td class="p-3 font-bold text-amber-600">
+                                    3 Moedas <span class="text-[10px] block font-normal opacity-80">(46% a 91.9% CSAT)</span>
+                                </td>
+                                <td class="p-3 font-bold text-red-500">
+                                    0 Moedas <span class="text-[10px] block font-normal opacity-80">(&lt; 46% CSAT)</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-bold text-slate-800">
+                                    ✅ RPC <span class="text-[10px] text-slate-400 block font-normal">(Meta Base: 82%)</span>
+                                </td>
+                                <td class="p-3 font-bold text-sky-600">
+                                    9 Moedas <span class="text-[10px] block font-normal opacity-80">(&ge; 86% RPC)</span>
+                                </td>
+                                <td class="p-3 font-bold text-emerald-600">
+                                    6 Moedas <span class="text-[10px] block font-normal opacity-80">(82% a 85.9% RPC)</span>
+                                </td>
+                                <td class="p-3 font-bold text-amber-600">
+                                    3 Moedas <span class="text-[10px] block font-normal opacity-80">(41% a 81.9% RPC)</span>
+                                </td>
+                                <td class="p-3 font-bold text-red-500">
+                                    0 Moedas <span class="text-[10px] block font-normal opacity-80">(&lt; 41% RPC)</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-blue-50/50 font-black text-xs text-slate-800">
+                                <td class="p-3 rounded-l-xl">MÁXIMO POSSÍVEL</td>
+                                <td class="p-3 text-sky-600">30 Moedas</td>
+                                <td class="p-3 text-emerald-600">20 Moedas</td>
+                                <td class="p-3 text-amber-600">10 Moedas</td>
+                                <td class="p-3 text-red-500 rounded-r-xl">0 Moedas</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Modal Notificação Toast -->
+    <div id="toast-msg" class="fixed bottom-5 right-5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl text-xs font-bold flex items-center gap-3 transition-all duration-300 transform translate-y-20 opacity-0 z-50">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toast-text">Moedas atualizadas com sucesso!</span>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // --- TROCA DE TABS ---
+        function switchTab(tabName) {
+            const tabs = ['projecao', 'diario', 'regras'];
+            tabs.forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                const btn = document.getElementById(`tab-btn-${t}`);
+                btn.className = "flex-1 py-3 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100";
+            });
+
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-btn-${tabName}`);
+            activeBtn.className = "flex-1 py-3 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center justify-center gap-2 bg-magalu-blue text-white shadow-md";
+
+            if (tabName === 'projecao') {
+                calcularProjecao();
+            }
+        }
+
+        // --- RETORNA CLASSIFICAÇÃO / TIERS ---
+        function getTierInfo(percentage) {
+            if (percentage >= 90) {
+                return {
+                    nome: "ESTRELA",
+                    sub: "SUPEROU A META (120% DA META)",
+                    emoji: "⭐",
+                    bgClass: "bg-sky-50 border-sky-300 text-sky-800",
+                    barColor: "bg-sky-500",
+                    textColor: "text-sky-600"
+                };
+            } else if (percentage >= 66.666) {
+                return {
+                    nome: "NUVENS",
+                    sub: "BATEU A META (100% DA META)",
+                    emoji: "☁️",
+                    bgClass: "bg-emerald-50 border-emerald-300 text-emerald-800",
+                    barColor: "bg-emerald-500",
+                    textColor: "text-emerald-600"
+                };
+            } else if (percentage >= 50) {
+                return {
+                    nome: "ÁGUIAS",
+                    sub: "FORA DA META (50% - 66.6%)",
+                    emoji: "🦅",
+                    bgClass: "bg-amber-50 border-amber-300 text-amber-800",
+                    barColor: "bg-amber-500",
+                    textColor: "text-amber-600"
+                };
+            } else {
+                return {
+                    nome: "MONTANHAS",
+                    sub: "FORA DA META (< 50%)",
+                    emoji: "⛰️",
+                    bgClass: "bg-red-50 border-red-300 text-red-800",
+                    barColor: "bg-red-500",
+                    textColor: "text-red-500"
+                };
+            }
+        }
+
+        // --- GERA A ESTRATÉGIA DIÁRIA DOS INDICADORES PARA ATINGIR UMA META DE MOEDAS/DIA ---
+        function gerarTextoEstrategia(moedasAlvo) {
+            if (moedasAlvo <= 0) {
+                return `<div class="text-emerald-700 font-bold">🎉 Meta já atingida! Apenas mantenha a constância diária.</div>`;
+            }
+            
+            let alvo = Math.min(30, Math.max(1, moedasAlvo));
+
+            if (alvo >= 30) {
+                return `
+                    <div class="flex items-center justify-between"><span class="font-bold">⚡ Performance:</span> <span class="bg-sky-100 text-sky-800 font-black px-1.5 py-0.5 rounded">12 moedas (⭐ Estrela)</span></div>
+                    <div class="flex items-center justify-between"><span class="font-bold">😊 CSAT (&ge;95%):</span> <span class="bg-sky-100 text-sky-800 font-black px-1.5 py-0.5 rounded">9 moedas (⭐ Estrela)</span></div>
+                    <div class="flex items-center justify-between"><span class="font-bold">✅ RPC (&ge;86%):</span> <span class="bg-sky-100 text-sky-800 font-black px-1.5 py-0.5 rounded">9 moedas (⭐ Estrela)</span></div>
+                    <div class="text-[11px] text-slate-500 mt-1 italic border-t pt-1">Total diário: <strong>30 moedas</strong> (Pontuação Máxima)</div>
+                `;
+            } else if (alvo >= 27) {
+                return `
+                    <div class="flex items-center justify-between"><span class="font-bold">⚡ Performance:</span> <span class="bg-sky-100 text-sky-800 font-black px-1.5 py-0.5 rounded">12 moedas (⭐ Estrela)</span></div>
+                    <div class="flex items-center justify-between"><span class="font-bold">😊 CSAT (&ge;95%):</span> <span class="bg-sky-100 text-sky-800 font-black px-1.5 py-0.5 rounded">9 moedas (⭐ Estrela)</span></div>
+                    <div class="flex items-center justify-between"><span class="font-bold">✅ RPC (&ge;82%):</span> <span class="bg-emerald-100 text-emerald-800 font-black px-1.5 py-0.5 rounded">6 moedas (☁️ Nuvens)</span></div>
+                    <div class="text-[11px] text-slate-500 mt-1 italic border-t pt-1">Total diário: <strong>27 moedas</strong></div>
+                `;
+            } else if (alvo >= 24) {
+                return `
+                    <div class="flex items-center justify-between"><span class="font-bold">⚡ Performance:</span> <span class="bg-sky-100 text-sky-800 font-black px-1.5 py-0.5 rounded">12 moedas (⭐ Estrela)</span></div>
+                    <div class="flex items-center justify-between"><span class="font-bold">😊 CSAT (&ge;92%):</span> <span class="bg-emerald-100 text-emerald-800 font-black px-1.5 py-0.5 rounded">6 moedas (☁️ Nuvens)</span></div>
+                    <div class="flex items-center justify-between"><span class="font-bold">✅ RPC (&ge;82%):</span> <span class="bg-emerald-100 text-emerald-800 font-black px-1.5 py-0.5 rounded">6 moedas (☁️ Nuvens)</span></div>
+                    <div class="text-[11px] text-slate-500 mt-1 italic border-t pt-1">Total diário: <strong>24 moedas</strong></div>
+                `;
+            } else if (alvo >= 20) {
+                return `
+                    <div class="flex items-center justify-between"><span class="font-bold">⚡ Performance:</span> <span class="bg-emerald-100 text-emerald-800 font-black px-1.5 py-0.5 rounded">8 moedas (☁️ Nuvens)</span></div>
+                    <div class="flex items-center justify-between"><span class="font-bold">😊 CSAT (&ge;92%):</span> <span class="bg-emerald-100 text-emerald-800 font-black px-1.5 py-0.5 rounded">6 moedas (☁️ Nuvens)</span></div>
+                    <div class="flex items-center justify-between"><span class="font-bold">✅ RPC (&ge;82%):</span> <span class="bg-emerald-100 text-emerald-800 font-black px-1.5 py-0.5 rounded">6 moedas (☁️ Nuvens)</span></div>
+                    <div class="text-[11px] text-slate-500 mt-1 italic border-t pt-1">Total diário: <strong>20 moedas</strong></div>
+                `;
+            } else if (alvo >= 10) {
+                return `
+                    <div class="flex items-center justify-between"><span class="font-bold">⚡ Performance:</span> <span class="bg-amber-100 text-amber-800 font-black px-1.5 py-0.5 rounded">4 moedas (🦅 Águias)</span></div>
+                    <div class="flex items-center justify-between"><span class="font-bold">😊 CSAT (&ge;92%):</span> <span class="bg-emerald-100 text-emerald-800 font-black px-1.5 py-0.5 rounded">6 moedas (☁️ Nuvens)</span></div>
+                    <div class="flex items-center justify-between"><span class="font-bold">✅ RPC (&ge;82%):</span> <span class="bg-emerald-100 text-emerald-800 font-black px-1.5 py-0.5 rounded">6 moedas (☁️ Nuvens)</span></div>
+                    <div class="text-[11px] text-slate-500 mt-1 italic border-t pt-1">Total diário: <strong>16 moedas</strong></div>
+                `;
+            } else {
+                return `
+                    <div class="flex items-center justify-between"><span class="font-bold">⚡ Performance:</span> <span class="bg-amber-100 text-amber-800 font-black px-1.5 py-0.5 rounded">4 moedas</span></div>
+                    <div class="flex items-center justify-between"><span class="font-bold">😊 CSAT:</span> <span class="bg-amber-100 text-amber-800 font-black px-1.5 py-0.5 rounded">3 moedas</span></div>
+                    <div class="flex items-center justify-between"><span class="font-bold">✅ RPC:</span> <span class="bg-amber-100 text-amber-800 font-black px-1.5 py-0.5 rounded">3 moedas</span></div>
+                    <div class="text-[11px] text-slate-500 mt-1 italic border-t pt-1">Total diário: <strong>10 moedas</strong></div>
+                `;
+            }
+        }
+
+        // --- CÁLCULO PRINCIPAL DA PROJEÇÃO MENSAL ---
+        function calcularProjecao() {
+            let diasTotais = parseInt(document.getElementById('input-dias-totais').value) || 22;
+            let diasPassados = parseInt(document.getElementById('input-dias-passados').value) || 1;
+            let moedasAtuais = parseInt(document.getElementById('input-moedas-atuais').value) || 0;
+
+            if (diasPassados > diasTotais) diasPassados = diasTotais;
+            if (diasPassados < 1) diasPassados = 1;
+            if (diasTotais < 1) diasTotais = 1;
+
+            let diasRestantes = diasTotais - diasPassados;
+            let moedasPossiveisAteHoje = diasPassados * 30;
+            let moedasPossiveisMes = diasTotais * 30;
+
+            let pctAtual = moedasPossiveisAteHoje === 0 ? 0 : (moedasAtuais / moedasPossiveisAteHoje) * 100;
+
+            document.getElementById('badge-dias-restantes').innerText = `Faltam ${diasRestantes} ${diasRestantes === 1 ? 'dia' : 'dias'}`;
+            document.getElementById('txt-moedas-fracao').innerText = `${moedasAtuais} / ${moedasPossiveisAteHoje}`;
+            document.getElementById('txt-porcentagem-atual').innerText = `(${pctAtual.toFixed(1)}%)`;
+            
+            document.getElementById('txt-moedas-atuais-inline').innerText = moedasAtuais;
+            document.getElementById('txt-moedas-possiveis-inline').innerText = moedasPossiveisAteHoje;
+            document.getElementById('txt-dia-passado-inline').innerText = `${diasPassados}º`;
+
+            let tier = getTierInfo(pctAtual);
+            let containerNivel = document.getElementById('badge-nivel-container');
+            containerNivel.className = `px-5 py-3 rounded-2xl flex items-center gap-3 border shadow-sm ${tier.bgClass}`;
+            document.getElementById('icon-nivel').innerText = tier.emoji;
+            document.getElementById('nome-nivel').innerText = tier.nome;
+            document.getElementById('sub-nivel').innerText = tier.sub;
+
+            let bar = document.getElementById('bar-progresso-atual');
+            let cappedPct = Math.min(Math.max(pctAtual, 0), 100);
+            bar.style.width = `${cappedPct}%`;
+            bar.className = `h-full rounded-full transition-all duration-500 ${tier.barColor}`;
+
+            // --- PROJEÇÃO NUVENS ---
+            let metaNuvensTotal = diasTotais * 20;
+            let faltamNuvens = Math.max(0, metaNuvensTotal - moedasAtuais);
+
+            document.getElementById('meta-nuvens-total').innerText = `${metaNuvensTotal} moedas`;
+            document.getElementById('meta-nuvens-faltam').innerText = `${faltamNuvens} moedas`;
+
+            let boxNuvensDiaria = document.getElementById('box-nuvens-diaria');
+            let boxIncentivo = document.getElementById('box-aguias-incentivo');
+
+            if (diasRestantes > 0) {
+                let mediaDiariaNuvensExata = Math.ceil(faltamNuvens / diasRestantes);
+
+                if (mediaDiariaNuvensExata > 30) {
+                    let metaAguiasTotal = Math.ceil(moedasPossiveisMes * 0.50);
+                    let faltamAguias = Math.max(0, metaAguiasTotal - moedasAtuais);
+                    let mediaDiariaAguiasExata = Math.ceil(faltamAguias / diasRestantes);
+
+                    document.getElementById('meta-nuvens-diaria').innerText = `30 moedas/dia (Máximo)`;
+                    document.getElementById('meta-nuvens-status-txt').innerText = `Entregar o limite máximo diário!`;
+                    boxNuvensDiaria.className = "bg-amber-600 text-white p-4 rounded-xl shadow-md text-center";
+
+                    if (boxIncentivo) {
+                        boxIncentivo.classList.remove('hidden');
+                        boxIncentivo.innerHTML = `
+                            <div class="flex items-center justify-center gap-1.5 font-black text-sm text-yellow-100">
+                                <i class="fa-solid fa-fire text-yellow-300"></i> Bora pra cima! Ainda é super possível!
+                            </div>
+                            <p class="text-xs text-amber-50 font-medium leading-tight text-center mt-1">
+                                Entregue <strong>30 moedas/dia</strong> para ficar o mais próximo possível de <strong>Nuvens</strong>!
+                            </p>
+                            <div class="mt-2 pt-2 border-t border-amber-400/50 text-xs font-bold flex justify-between items-center px-1">
+                                <span class="text-amber-100">🦅 Garantir no mínimo Águias (50%):</span>
+                                <span class="bg-amber-700/80 px-2 py-0.5 rounded text-white font-extrabold">Faltam ${faltamAguias} moedas (${mediaDiariaAguiasExata}m/dia)</span>
+                            </div>
+                        `;
+                    }
+                    document.getElementById('box-nuvens-estrategia').innerHTML = gerarTextoEstrategia(30);
+
+                } else {
+                    document.getElementById('meta-nuvens-diaria').innerText = `${mediaDiariaNuvensExata} moedas/dia`;
+                    document.getElementById('meta-nuvens-status-txt').innerText = `Para os ${diasRestantes} dias restantes`;
+                    boxNuvensDiaria.className = "bg-emerald-600 text-white p-4 rounded-xl shadow-md text-center";
+                    if (boxIncentivo) boxIncentivo.classList.add('hidden');
+
+                    document.getElementById('box-nuvens-estrategia').innerHTML = gerarTextoEstrategia(mediaDiariaNuvensExata);
+                }
+            } else {
+                document.getElementById('meta-nuvens-diaria').innerText = faltamNuvens === 0 ? "META ATINGIDA!" : "MÊS ENCERRADO";
+                document.getElementById('meta-nuvens-status-txt').innerText = "Não há mais dias no mês";
+                boxNuvensDiaria.className = "bg-emerald-600 text-white p-4 rounded-xl shadow-md text-center";
+                if (boxIncentivo) boxIncentivo.classList.add('hidden');
+                document.getElementById('box-nuvens-estrategia').innerHTML = gerarTextoEstrategia(0);
+            }
+
+            // --- PROJEÇÃO ESTRELA ---
+            let metaEstrelaTotal = Math.ceil(moedasPossiveisMes * 0.90);
+            let faltamEstrela = Math.max(0, metaEstrelaTotal - moedasAtuais);
+
+            document.getElementById('meta-estrela-total').innerText = `${metaEstrelaTotal} moedas`;
+            document.getElementById('meta-estrela-faltam').innerText = `${faltamEstrela} moedas`;
+
+            if (diasRestantes > 0) {
+                let mediaDiariaEstrelaExata = Math.ceil(faltamEstrela / diasRestantes);
+
+                if (mediaDiariaEstrelaExata > 30) {
+                    document.getElementById('meta-estrela-diaria').innerText = `30 moedas/dia (Máximo)`;
+                    document.getElementById('meta-estrela-status-txt').innerText = `Objetivo Inalcançável (Entregue o máximo de 30/dia)`;
+                    document.getElementById('box-estrela-estrategia').innerHTML = gerarTextoEstrategia(30);
+                } else {
+                    document.getElementById('meta-estrela-diaria').innerText = `${mediaDiariaEstrelaExata} moedas/dia`;
+                    document.getElementById('meta-estrela-status-txt').innerText = `Para os ${diasRestantes} dias restantes`;
+                    document.getElementById('box-estrela-estrategia').innerHTML = gerarTextoEstrategia(mediaDiariaEstrelaExata);
+                }
+            } else {
+                document.getElementById('meta-estrela-diaria').innerText = faltamEstrela === 0 ? "META ATINGIDA!" : "MÊS ENCERRADO";
+                document.getElementById('meta-estrela-status-txt').innerText = "Não há mais dias no mês";
+                document.getElementById('box-estrela-estrategia').innerHTML = gerarTextoEstrategia(0);
+            }
+
+            simularRitmo();
+        }
+
+        // --- SIMULADOR DE RITMO ---
+        function simularRitmo() {
+            let diasTotais = parseInt(document.getElementById('input-dias-totais').value) || 22;
+            let diasPassados = parseInt(document.getElementById('input-dias-passados').value) || 1;
+            let moedasAtuais = parseInt(document.getElementById('input-moedas-atuais').value) || 0;
+            let ritmo = parseInt(document.getElementById('sim-slider-ritmo').value) || 0;
+
+            document.getElementById('sim-ritmo-valor').innerText = `${ritmo} moedas/dia`;
+
+            let diasRestantes = Math.max(0, diasTotais - diasPassados);
+            let moedasFuturas = diasRestantes * ritmo;
+            let totalFinalEstimado = moedasAtuais + moedasFuturas;
+            let maxMes = diasTotais * 30;
+
+            let pctFinal = maxMes === 0 ? 0 : (totalFinalEstimado / maxMes) * 100;
+            let tierFinal = getTierInfo(pctFinal);
+
+            document.getElementById('sim-resultado-box').innerHTML = `
+                Total Estimado no Mês: <span class="text-magalu-blue">${totalFinalEstimado} / ${maxMes}</span> (${pctFinal.toFixed(1)}%) ➔ 
+                <span class="${tierFinal.textColor}">${tierFinal.emoji} ${tierFinal.nome}</span>
+            `;
+        }
+
+        // --- CALCULADORA DIÁRIA ---
+        function calcDia() {
+            let prom = parseFloat(document.getElementById('csat-promotores').value) || 0;
+            let det = parseFloat(document.getElementById('csat-detratores').value) || 0;
+            let totCsat = prom + det;
+            let pctCsat = totCsat > 0 ? (prom / totCsat) * 100 : 0;
+            let atingimentoCsat = (pctCsat / 92) * 100;
+            
+            document.getElementById('csat-pct-res').innerText = `${pctCsat.toFixed(1)}% (${atingimentoCsat.toFixed(1)}% da Meta)`;
+
+            let mCsat = 0;
+            let csatTxt = "0 Moedas (⛰️ Montanhas)";
+            if (pctCsat >= 95) {
+                mCsat = 9;
+                csatTxt = "9 Moedas (⭐ Estrela - Acima de 95%)";
+            } else if (pctCsat >= 92) {
+                mCsat = 6;
+                csatTxt = "6 Moedas (☁️ Nuvens - Meta 92%)";
+            } else if (atingimentoCsat >= 50) {
+                mCsat = 3;
+                csatTxt = "3 Moedas (🦅 Águias - Fora da Meta)";
+            } else {
+                mCsat = 0;
+                csatTxt = "0 Moedas (⛰️ Montanhas - Fora da Meta)";
+            }
+            document.getElementById('csat-moedas-res').innerText = csatTxt;
+
+            let sim = parseFloat(document.getElementById('rpc-sim').value) || 0;
+            let nao = parseFloat(document.getElementById('rpc-nao').value) || 0;
+            let totRpc = sim + nao;
+            let pctRpc = totRpc > 0 ? (sim / totRpc) * 100 : 0;
+            let atingimentoRpc = (pctRpc / 82) * 100;
+
+            document.getElementById('rpc-pct-res').innerText = `${pctRpc.toFixed(1)}% (${atingimentoRpc.toFixed(1)}% da Meta)`;
+
+            let mRpc = 0;
+            let rpcTxt = "0 Moedas (⛰️ Montanhas)";
+            if (pctRpc >= 86) {
+                mRpc = 9;
+                rpcTxt = "9 Moedas (⭐ Estrela - Acima de 86%)";
+            } else if (pctRpc >= 82) {
+                mRpc = 6;
+                rpcTxt = "6 Moedas (☁️ Nuvens - Meta 82%)";
+            } else if (atingimentoRpc >= 50) {
+                mRpc = 3;
+                rpcTxt = "3 Moedas (🦅 Águias - Fora da Meta)";
+            } else {
+                mRpc = 0;
+                rpcTxt = "0 Moedas (⛰️ Montanhas - Fora da Meta)";
+            }
+            document.getElementById('rpc-moedas-res').innerText = rpcTxt;
+
+            let perfRadios = document.getElementsByName('radio-perf');
+            let mPerf = 12;
+            for (let r of perfRadios) {
+                if (r.checked) {
+                    mPerf = parseInt(r.value);
+                    break;
+                }
+            }
+
+            let totalDia = mPerf + mCsat + mRpc;
+            document.getElementById('total-moedas-dia').innerText = `${totalDia} / 30`;
+
+            return totalDia;
+        }
+
+        // --- ADICIONAR SALDO ---
+        function adicionarMoedasAoSaldo() {
+            let moedasHoje = calcDia();
+            let elInputMoedas = document.getElementById('input-moedas-atuais');
+            let moedasAtuais = parseInt(elInputMoedas.value) || 0;
+            
+            elInputMoedas.value = moedasAtuais + moedasHoje;
+            
+            if (moedasHoje >= 25 && typeof confetti === 'function') {
+                confetti({
+                    particleCount: 80,
+                    spread: 60,
+                    origin: { y: 0.8 }
+                });
+            }
+
+            mostrarToast(`Adicionadas +${moedasHoje} moedas ao seu saldo!`);
+            switchTab('projecao');
+        }
+
+        function mostrarToast(mensagem) {
+            let toast = document.getElementById('toast-msg');
+            document.getElementById('toast-text').innerText = mensagem;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        window.onload = function() {
+            calcDia();
+            calcularProjecao();
+        };
+    </script>
+</body>
+</html>
