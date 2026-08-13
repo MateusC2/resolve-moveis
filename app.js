@@ -134,3 +134,47 @@ if(deliveryTruck){
     },3200);
   });
 }
+
+const contactCard=document.querySelector('.contact-card');
+const hero=document.querySelector('.hero');
+if(contactCard&&hero){
+  let dragState=null;
+
+  contactCard.addEventListener('pointerdown',event=>{
+    if(event.button!==0)return;
+    const cardRect=contactCard.getBoundingClientRect();
+    const heroRect=hero.getBoundingClientRect();
+    dragState={
+      pointerId:event.pointerId,
+      offsetX:event.clientX-cardRect.left,
+      offsetY:event.clientY-cardRect.top,
+      heroRect
+    };
+    contactCard.setPointerCapture(event.pointerId);
+    contactCard.classList.add('dragging');
+    event.preventDefault();
+  });
+
+  contactCard.addEventListener('pointermove',event=>{
+    if(!dragState||event.pointerId!==dragState.pointerId)return;
+    const cardRect=contactCard.getBoundingClientRect();
+    const maxX=dragState.heroRect.width-cardRect.width;
+    const maxY=dragState.heroRect.height-cardRect.height;
+    const x=Math.max(0,Math.min(maxX,event.clientX-dragState.heroRect.left-dragState.offsetX));
+    const y=Math.max(0,Math.min(maxY,event.clientY-dragState.heroRect.top-dragState.offsetY));
+    if(contactCard.parentElement!==hero)hero.appendChild(contactCard);
+    contactCard.style.position='absolute';
+    contactCard.style.left=`${x}px`;
+    contactCard.style.top=`${y}px`;
+    contactCard.style.margin='0';
+  });
+
+  function finishCardDrag(event){
+    if(!dragState||event.pointerId!==dragState.pointerId)return;
+    contactCard.releasePointerCapture(event.pointerId);
+    contactCard.classList.remove('dragging');
+    dragState=null;
+  }
+  contactCard.addEventListener('pointerup',finishCardDrag);
+  contactCard.addEventListener('pointercancel',finishCardDrag);
+}

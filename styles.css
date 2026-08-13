@@ -25,6 +25,7 @@ footer:after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;bac
 .motion-ready .hero>div:first-child .eyebrow{animation-delay:.12s}.motion-ready .hero h1{animation-delay:.2s}.motion-ready .hero p{animation-delay:.3s}
 .motion-ready .workspace{animation:workspace-in .8s .32s cubic-bezier(.22,1,.36,1) both}
 .motion-ready .contact-card{transform-origin:calc(100% - 22px) 4px;animation:tag-drop .9s .45s cubic-bezier(.2,.9,.3,1.15) both,tag-sway 3.8s 1.35s ease-in-out infinite}
+.contact-card{cursor:grab;user-select:none;touch-action:none;z-index:3}.contact-card:hover{box-shadow:0 24px 52px rgba(0,60,128,.32)}.contact-card:focus-visible{outline:3px solid #ffcc00;outline-offset:5px}.motion-ready .contact-card.dragging,.contact-card.dragging{cursor:grabbing;animation-play-state:paused;transform:rotate(-2deg) scale(1.025);box-shadow:0 28px 60px rgba(0,48,105,.38);z-index:20}
 .motion-ready .hero-orbit{animation:orbit-turn 18s linear infinite}
 .motion-ready .hero:before{animation:dots-drift 14s ease-in-out infinite alternate}
 .step,.step b,.primary,.secondary,.copy-btn,.choice,.guide-cards article,.search-box{transition:transform .25s cubic-bezier(.22,1,.36,1),box-shadow .25s ease,border-color .25s ease,background-color .25s ease,color .25s ease}
