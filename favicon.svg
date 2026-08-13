@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="brand-line" x1="0" x2="1">
+      <stop offset="0" stop-color="#ffcc00" />
+      <stop offset=".22" stop-color="#ff6b00" />
+      <stop offset=".43" stop-color="#f20a72" />
+      <stop offset=".63" stop-color="#a700d7" />
+      <stop offset=".82" stop-color="#008fe5" />
+      <stop offset="1" stop-color="#00cf68" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="13" fill="#087ff5" />
+  <text x="32" y="34" fill="#fff" font-family="Arial, sans-serif" font-size="15" font-weight="700" text-anchor="middle">magalu</text>
+  <rect x="10" y="40" width="44" height="3" rx="1.5" fill="url(#brand-line)" />
+</svg>

@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0086d8" />
   <title>Resolve Móveis | Apoio ao SAC Pós-venda</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="alternate icon" type="image/png" href="logmagalu.png" />
+  <link rel="apple-touch-icon" href="logmagalu.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
@@ -15,7 +18,9 @@
     <div class="magalu-stripe" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <header class="topbar">
       <a class="brand" href="#" aria-label="Magalu Resolve Móveis — início">
-        <span class="magalu-wordmark">magalu</span>
+        <span class="magalu-logo-crop" aria-hidden="true">
+          <img src="magalu-logo.png" alt="" />
+        </span>
         <span class="brand-divider"></span>
         <span class="product-name">Resolve <strong>Móveis</strong></span>
       </a>
@@ -44,6 +49,23 @@
 
       <section class="workspace">
         <div class="stepper" aria-label="Etapas da triagem">
+          <span class="delivery-boxes" aria-hidden="true"></span>
+          <button class="delivery-truck" type="button" aria-label="Caminhão de entregas — clique para interagir">
+            <svg viewBox="0 0 116 55">
+              <path class="truck-box" d="M7 8h62v35H7z" />
+              <path class="truck-cab" d="M69 20h22l14 14v9H69z" />
+              <path class="truck-window" d="M76 24h13l9 10H76z" />
+              <path class="truck-bumper" d="M3 42h108" />
+              <circle class="truck-wheel" cx="27" cy="44" r="8" />
+              <circle class="truck-wheel" cx="88" cy="44" r="8" />
+              <circle class="truck-hub" cx="27" cy="44" r="3" />
+              <circle class="truck-hub" cx="88" cy="44" r="3" />
+              <path class="truck-mark" d="M24 18h28M24 25h20" />
+            </svg>
+            <span class="driver-speech" aria-live="polite"><b></b></span>
+            <span class="crash-flash">✦</span>
+            <span class="truck-smoke"><i></i><i></i><i></i><i></i></span>
+          </button>
           <button class="step active" data-step="1"><b>01</b><span>Fornecedor</span></button>
           <i></i>
           <button class="step" data-step="2"><b>02</b><span>Produto</span></button>
