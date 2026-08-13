@@ -148,7 +148,9 @@ if(contactCard&&hero){
       pointerId:event.pointerId,
       offsetX:event.clientX-cardRect.left,
       offsetY:event.clientY-cardRect.top,
-      heroRect
+      heroRect,
+      originLeft:cardRect.left,
+      originTop:cardRect.top
     };
     contactCard.setPointerCapture(event.pointerId);
     contactCard.classList.add('dragging');
@@ -157,35 +159,24 @@ if(contactCard&&hero){
 
   contactCard.addEventListener('pointermove',event=>{
     if(!dragState||event.pointerId!==dragState.pointerId)return;
-    const cardRect=contactCard.getBoundingClientRect();
-    const maxX=dragState.heroRect.width-cardRect.width;
-    const maxY=dragState.heroRect.height-cardRect.height;
-    const x=Math.max(0,Math.min(maxX,event.clientX-dragState.heroRect.left-dragState.offsetX));
-    const y=Math.max(0,Math.min(maxY,event.clientY-dragState.heroRect.top-dragState.offsetY));
-    if(contactCard.parentElement!==hero)hero.appendChild(contactCard);
-    contactCard.style.position='absolute';
-    contactCard.style.left=`${x}px`;
-    contactCard.style.top=`${y}px`;
-    contactCard.style.margin='0';
+    const cardWidth=contactCard.offsetWidth;
+    const cardHeight=contactCard.offsetHeight;
+    const targetLeft=Math.max(dragState.heroRect.left,Math.min(dragState.heroRect.right-cardWidth,event.clientX-dragState.offsetX));
+    const targetTop=Math.max(dragState.heroRect.top,Math.min(dragState.heroRect.bottom-cardHeight,event.clientY-dragState.offsetY));
+    const x=targetLeft-dragState.originLeft;
+    const y=targetTop-dragState.originTop;
+    contactCard.style.transform=`translate3d(${x}px,${y}px,0) rotate(-2deg) scale(1.025)`;
   });
 
   function finishCardDrag(event){
     if(!dragState||event.pointerId!==dragState.pointerId)return;
     contactCard.releasePointerCapture(event.pointerId);
     contactCard.classList.remove('dragging');
-    const heroVisual=document.querySelector('.hero-visual');
-    const heroRect=hero.getBoundingClientRect();
-    const visualRect=heroVisual.getBoundingClientRect();
-    const cardRect=contactCard.getBoundingClientRect();
-    const targetX=visualRect.left-heroRect.left+(visualRect.width-cardRect.width)/2;
-    const targetY=visualRect.top-heroRect.top+(visualRect.height-cardRect.height)/2;
     contactCard.classList.add('returning-home');
-    contactCard.style.left=`${targetX}px`;
-    contactCard.style.top=`${targetY}px`;
+    contactCard.style.transform='translate3d(0,0,0) rotate(-2deg)';
     setTimeout(()=>{
-      heroVisual.appendChild(contactCard);
-      contactCard.removeAttribute('style');
       contactCard.classList.remove('returning-home');
+      contactCard.style.removeProperty('transform');
     },520);
     dragState=null;
   }
