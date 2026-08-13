@@ -173,6 +173,20 @@ if(contactCard&&hero){
     if(!dragState||event.pointerId!==dragState.pointerId)return;
     contactCard.releasePointerCapture(event.pointerId);
     contactCard.classList.remove('dragging');
+    const heroVisual=document.querySelector('.hero-visual');
+    const heroRect=hero.getBoundingClientRect();
+    const visualRect=heroVisual.getBoundingClientRect();
+    const cardRect=contactCard.getBoundingClientRect();
+    const targetX=visualRect.left-heroRect.left+(visualRect.width-cardRect.width)/2;
+    const targetY=visualRect.top-heroRect.top+(visualRect.height-cardRect.height)/2;
+    contactCard.classList.add('returning-home');
+    contactCard.style.left=`${targetX}px`;
+    contactCard.style.top=`${targetY}px`;
+    setTimeout(()=>{
+      heroVisual.appendChild(contactCard);
+      contactCard.removeAttribute('style');
+      contactCard.classList.remove('returning-home');
+    },520);
     dragState=null;
   }
   contactCard.addEventListener('pointerup',finishCardDrag);
@@ -210,4 +224,75 @@ if(magaluLetterLogo){
   magaluLetterLogo.addEventListener('keydown',event=>{
     if(event.key==='Enter'||event.key===' '){event.preventDefault();interactWithLogo()}
   });
+}
+
+const particleCanvas=document.querySelector('.hero-particles');
+if(particleCanvas&&hero&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  const particleContext=particleCanvas.getContext('2d');
+  let particles=[];
+  let particleWaves=[];
+  let particleFrame;
+  let particleLastTime=performance.now();
+
+  function resizeParticles(){
+    const rect=hero.getBoundingClientRect();
+    const ratio=Math.min(window.devicePixelRatio||1,2);
+    particleCanvas.width=Math.round(rect.width*ratio);
+    particleCanvas.height=Math.round(rect.height*ratio);
+    particleCanvas.style.width=`${rect.width}px`;
+    particleCanvas.style.height=`${rect.height}px`;
+    particleContext.setTransform(ratio,0,0,ratio,0,0);
+    particles=[];
+    const gap=70;
+    for(let y=38;y<rect.height;y+=gap){
+      for(let x=55;x<rect.width;x+=gap){
+        const offset=(Math.floor(y/gap)%2)*9;
+        particles.push({homeX:x+offset,homeY:y,x:x+offset,y,vx:0,vy:0,r:4+Math.random()*4,phase:Math.random()*Math.PI*2});
+      }
+    }
+  }
+
+  function animateParticles(now){
+    const dt=Math.min((now-particleLastTime)/16.67,2);
+    particleLastTime=now;
+    particleContext.clearRect(0,0,particleCanvas.clientWidth,particleCanvas.clientHeight);
+    particleWaves.forEach(wave=>{wave.radius+=7*dt;wave.life-=.022*dt});
+    particleWaves=particleWaves.filter(wave=>wave.life>0);
+    particles.forEach(particle=>{
+      particleWaves.forEach(wave=>{
+        const dx=particle.x-wave.x,dy=particle.y-wave.y;
+        const distance=Math.hypot(dx,dy)||1;
+        const edgeDistance=Math.abs(distance-wave.radius);
+        if(edgeDistance<75){
+          const force=(1-edgeDistance/75)*wave.life*1.15;
+          particle.vx+=dx/distance*force;
+          particle.vy+=dy/distance*force;
+        }
+      });
+      particle.vx+=(particle.homeX-particle.x)*.018*dt;
+      particle.vy+=(particle.homeY-particle.y)*.018*dt;
+      particle.vx*=Math.pow(.91,dt);particle.vy*=Math.pow(.91,dt);
+      particle.x+=particle.vx*dt;particle.y+=particle.vy*dt;
+      const pulse=Math.sin(now*.0017+particle.phase)*.8;
+      particleContext.beginPath();
+      particleContext.arc(particle.x,particle.y,Math.max(2,particle.r+pulse),0,Math.PI*2);
+      particleContext.fillStyle='rgba(255,255,255,.14)';
+      particleContext.fill();
+    });
+    particleWaves.forEach(wave=>{
+      particleContext.beginPath();particleContext.arc(wave.x,wave.y,wave.radius,0,Math.PI*2);
+      particleContext.strokeStyle=`rgba(255,255,255,${wave.life*.18})`;particleContext.lineWidth=2;particleContext.stroke();
+    });
+    particleFrame=requestAnimationFrame(animateParticles);
+  }
+
+  hero.addEventListener('pointerdown',event=>{
+    if(event.target.closest('button,a,input,textarea,.contact-card'))return;
+    const rect=hero.getBoundingClientRect();
+    particleWaves.push({x:event.clientX-rect.left,y:event.clientY-rect.top,radius:0,life:1});
+  });
+  new ResizeObserver(resizeParticles).observe(hero);
+  resizeParticles();
+  particleFrame=requestAnimationFrame(animateParticles);
+  window.addEventListener('pagehide',()=>cancelAnimationFrame(particleFrame),{once:true});
 }
