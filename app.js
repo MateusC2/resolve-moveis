@@ -175,6 +175,7 @@ if(contactCard&&hero){
     contactCard.classList.add('returning-home');
     contactCard.style.transform='translate3d(0,0,0) rotate(-2deg)';
     setTimeout(()=>{
+      contactCard.classList.add('has-dragged');
       contactCard.classList.remove('returning-home');
       contactCard.style.removeProperty('transform');
     },520);
