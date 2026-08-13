@@ -15,6 +15,7 @@
 .magalu-stripe i{display:none}
 .magalu-logo-crop{width:91px;height:34px;display:block;position:relative;overflow:hidden;flex:0 0 91px}
 .magalu-logo-crop img{position:absolute;width:114px;height:auto;max-width:none;left:-12px;top:-10px;display:block}
+.magalu-letter-logo{width:158px;height:64px;display:flex;flex-direction:column;justify-content:center;gap:8px;flex:0 0 158px;cursor:pointer;user-select:none;position:relative}.magalu-letter-logo:focus-visible{outline:3px solid #ffcc00;outline-offset:5px;border-radius:5px}.logo-letters{height:31px;display:flex;align-items:baseline;justify-content:flex-start;white-space:nowrap}.logo-letters i{display:inline-block;color:#fff;font:800 36px/.85 Manrope,sans-serif;font-style:normal;letter-spacing:-3px;text-shadow:0 2px 1px rgba(0,65,125,.14);transform-origin:center;will-change:transform,opacity}.logo-rainbow{display:block;width:156px;height:6px;border-radius:4px;background:linear-gradient(90deg,#ffcc00,#ff7a00 18%,#f71968 38%,#bd00dc 58%,#4b39e2 75%,#00a9e8 90%,#18d36d);transition:transform .25s ease}.magalu-letter-logo:hover .logo-rainbow{transform:scaleX(1.035)}.logo-letters i.falling{pointer-events:none;animation:logo-letter-fall .85s cubic-bezier(.55,.05,.8,.35) forwards}.logo-letters i.returning{animation:logo-letter-return .55s var(--return-delay) cubic-bezier(.2,.9,.3,1.2) both}
 footer{position:relative;border-top:1px solid #dfe8ef;padding-bottom:32px}
 footer:after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;background:linear-gradient(90deg,#ffcc00 0%,#ff8a00 15%,#ff334d 29%,#ec0a94 44%,#b400d6 59%,#652bd4 72%,#148fd7 86%,#00bd69 100%);box-shadow:none}
 
@@ -69,4 +70,6 @@ footer:after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;bac
 @keyframes smoke-puff{0%{opacity:0;transform:translate(0,0) scale(.35)}20%{opacity:.85}100%{opacity:0;transform:translate(18px,-29px) scale(1.8)}}
 @keyframes speech-jitter{0%{translate:0 0}35%{translate:-2px 0}70%{translate:2px 0}100%{translate:0 0}}
 @keyframes speech-out{to{opacity:0;transform:translateX(-50%) translateY(-6px) scale(.94)}}
+@keyframes logo-letter-fall{0%{opacity:1;transform:translate(0,0) rotate(0)}18%{transform:translate(3px,-4px) rotate(8deg)}100%{opacity:0;transform:translate(14px,105px) rotate(48deg)}}
+@keyframes logo-letter-return{from{opacity:0;transform:translateY(30px) scale(.7) rotate(-12deg)}to{opacity:1;transform:none}}
 @media(max-width:520px){.delivery-truck{width:68px;top:-35px}.delivery-boxes i{width:14px;height:13px;top:-14px}@keyframes truck-route{0%{left:8px;transform:scaleX(1)}47%{left:calc(100% - 76px);transform:scaleX(1)}49%{left:calc(100% - 76px);transform:scaleX(-1)}97%,100%{left:8px;transform:scaleX(-1)}}}

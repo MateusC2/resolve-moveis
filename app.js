@@ -178,3 +178,36 @@ if(contactCard&&hero){
   contactCard.addEventListener('pointerup',finishCardDrag);
   contactCard.addEventListener('pointercancel',finishCardDrag);
 }
+
+const magaluLetterLogo=document.querySelector('.magalu-letter-logo');
+if(magaluLetterLogo){
+  const logoLetters=[...magaluLetterLogo.querySelectorAll('.logo-letters i')];
+  let visibleLogoLetters=logoLetters.length;
+
+  function interactWithLogo(){
+    if(visibleLogoLetters>1){
+      const letter=logoLetters[visibleLogoLetters-1];
+      letter.classList.add('falling');
+      visibleLogoLetters--;
+      magaluLetterLogo.setAttribute('aria-label',visibleLogoLetters===1?'Uma letra restante. Clique para remontar a logo.':'Logo Magalu interativa. Clique para derrubar outra letra.');
+      return;
+    }
+    logoLetters.forEach((letter,index)=>{
+      letter.classList.remove('falling');
+      letter.style.setProperty('--return-delay',`${index*55}ms`);
+      letter.classList.add('returning');
+      setTimeout(()=>letter.classList.remove('returning'),650+index*55);
+    });
+    visibleLogoLetters=logoLetters.length;
+    magaluLetterLogo.setAttribute('aria-label','Logo Magalu remontada. Clique para derrubar uma letra.');
+  }
+
+  magaluLetterLogo.addEventListener('click',event=>{
+    event.preventDefault();
+    event.stopPropagation();
+    interactWithLogo();
+  });
+  magaluLetterLogo.addEventListener('keydown',event=>{
+    if(event.key==='Enter'||event.key===' '){event.preventDefault();interactWithLogo()}
+  });
+}
