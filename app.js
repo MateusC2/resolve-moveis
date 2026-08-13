@@ -68,7 +68,19 @@ if(deliveryTruck){
   let boxSpawnTimer;
   let lastTruckX=null;
   let truckDirection=0;
+  let lastDriverPhrase=-1;
   const deliveryBoxes=document.querySelector('.delivery-boxes');
+  const driverSpeech=deliveryTruck.querySelector('.driver-speech b');
+  const driverPhrases=[
+    'Ih, de novo não!',
+    'Logo agora?!',
+    'Esse buraco não estava aí!',
+    'Minha entrega vai atrasar!',
+    'Alguém chama o mecânico!',
+    'Eu sabia que ouvi um barulho...',
+    'Calma, eu conserto!',
+    'Hoje não é meu dia!'
+  ];
 
   function clearDeliveryBoxes(){
     deliveryBoxes.querySelectorAll('i').forEach(box=>{
@@ -103,12 +115,20 @@ if(deliveryTruck){
   scheduleBoxSpawn();
   deliveryTruck.addEventListener('click',()=>{
     if(deliveryTruck.classList.contains('crashed'))return;
+    let phraseIndex;
+    do phraseIndex=Math.floor(Math.random()*driverPhrases.length);
+    while(phraseIndex===lastDriverPhrase&&driverPhrases.length>1);
+    lastDriverPhrase=phraseIndex;
+    driverSpeech.textContent=driverPhrases[phraseIndex];
+    const truckMatrix=new DOMMatrixReadOnly(getComputedStyle(deliveryTruck).transform);
+    deliveryTruck.classList.toggle('facing-left',truckMatrix.a<0);
     deliveryTruck.classList.add('crashed');
     clearDeliveryBoxes();
     deliveryTruck.setAttribute('aria-label','Caminhão parado para conserto');
     clearTimeout(truckRepairTimer);
     truckRepairTimer=setTimeout(()=>{
       deliveryTruck.classList.remove('crashed');
+      deliveryTruck.classList.remove('facing-left');
       lastTruckX=null;
       deliveryTruck.setAttribute('aria-label','Caminhão de entregas — clique para interagir');
     },3200);
