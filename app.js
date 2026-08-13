@@ -46,3 +46,71 @@ async function copy(text){try{await navigator.clipboard.writeText(text)}catch{co
 document.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click',()=>{const el=document.querySelector(`#${b.dataset.copy}`);copy(el.value||el.textContent)}));
 document.querySelector('#copyAll').addEventListener('click',()=>copy(`${document.querySelector('#customerScript').textContent}\n\n${document.querySelector('#zendeskNote').value}`));
 document.querySelector('#restart').addEventListener('click',()=>{state.step=1;state.supplier=state.product=state.issue='';document.querySelectorAll('.choice').forEach(x=>x.classList.remove('selected'));document.querySelectorAll('[data-next]').forEach(x=>x.disabled=true);document.querySelector('#selectedSupplier').classList.add('hidden');input.value='';goTo(1);input.focus()});
+
+// Movimento progressivo: a página permanece funcional mesmo sem animações/JS moderno.
+if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  document.documentElement.classList.add('motion-ready');
+  const revealItems=document.querySelectorAll('.quick-guide .guide-title,.guide-cards article,footer');
+  const revealObserver=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        entry.target.classList.add('is-visible');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  },{threshold:.14,rootMargin:'0px 0px -35px'});
+  revealItems.forEach(item=>revealObserver.observe(item));
+}
+
+const deliveryTruck=document.querySelector('.delivery-truck');
+if(deliveryTruck){
+  let truckRepairTimer;
+  let boxSpawnTimer;
+  let lastTruckX=null;
+  let truckDirection=0;
+  const deliveryBoxes=document.querySelector('.delivery-boxes');
+
+  function clearDeliveryBoxes(){
+    deliveryBoxes.querySelectorAll('i').forEach(box=>{
+      box.classList.add('leaving');
+      setTimeout(()=>box.remove(),420);
+    });
+  }
+
+  function scheduleBoxSpawn(){
+    clearTimeout(boxSpawnTimer);
+    // Intervalos variados criam pausas naturais entre uma entrega e outra.
+    boxSpawnTimer=setTimeout(()=>{
+      if(!deliveryTruck.classList.contains('crashed')){
+        const trackRect=deliveryBoxes.getBoundingClientRect();
+        const truckRect=deliveryTruck.getBoundingClientRect();
+        const currentX=truckRect.left+truckRect.width/2-trackRect.left;
+        if(lastTruckX!==null){
+          const nextDirection=Math.sign(currentX-lastTruckX);
+          if(truckDirection&&nextDirection&&nextDirection!==truckDirection)clearDeliveryBoxes();
+          if(nextDirection)truckDirection=nextDirection;
+        }
+        lastTruckX=currentX;
+        const box=document.createElement('i');
+        box.style.left=`${Math.max(10,Math.min(trackRect.width-28,currentX-9))}px`;
+        deliveryBoxes.appendChild(box);
+        requestAnimationFrame(()=>box.classList.add('landed'));
+      }
+      scheduleBoxSpawn();
+    },900+Math.random()*1900);
+  }
+
+  scheduleBoxSpawn();
+  deliveryTruck.addEventListener('click',()=>{
+    if(deliveryTruck.classList.contains('crashed'))return;
+    deliveryTruck.classList.add('crashed');
+    clearDeliveryBoxes();
+    deliveryTruck.setAttribute('aria-label','Caminhão parado para conserto');
+    clearTimeout(truckRepairTimer);
+    truckRepairTimer=setTimeout(()=>{
+      deliveryTruck.classList.remove('crashed');
+      lastTruckX=null;
+      deliveryTruck.setAttribute('aria-label','Caminhão de entregas — clique para interagir');
+    },3200);
+  });
+}
